@@ -1,0 +1,5 @@
+Makefile
+testapp
+CMake*
+!CMakeLists.txt
+*.cmake
