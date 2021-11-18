@@ -20,7 +20,7 @@ int main () {
 	}
 
 	printf("Initializing grid...");
-   	int s = grid_init();
+   	s = grid_init();
 	if (s == -1) {
 		printf("initialization failed.\n");
 		return 1;
