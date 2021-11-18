@@ -45,7 +45,7 @@ int grid_init () {
 		}
 		int s = sprintf(pinlab, "LEDGRID_%x", p);
 		assert(s == 1);
-		s = gpiod_line_request_output(gridctl[p], pinlab, 0);
+		s = gpiod_line_request_output(gridctl[p], pinlab, 1);
 		if (s == -1) {
 			syslog(LOG_ERR, "Could not reserve pin %u as an input", GRID_CTL_PINS[p]);
 			goto fail;
@@ -82,8 +82,9 @@ int grid_select (unsigned addr) {
 			syslog(LOG_ERR, "Pin LEDGRID_%x is not initialized!", p);
 			return -1;
 		}
-		int bit =  (addr & (1 << p)) ? 1 : 0;
-		syslog(LOG_DEBUG, "Selecting address %x: LEDGRID_%x %s", addr, p, (bit) ? "HIGH" : "LOW");
+		// logic between Nano and Arduino is inverted so we can use pull-ups on ard
+		int bit =  (addr & (1 << p)) ? 0 : 1;
+		syslog(LOG_DEBUG, "Selecting address %x: LEDGRID_%x %s (inverted)", addr, p, (bit) ? "HIGH" : "LOW");
 		int s = gpiod_line_set_value(gridctl[p], bit);
 		if (s == -1) {
 			syslog(LOG_ERR, "Error setting LEDGRID_%x", p);
