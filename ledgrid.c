@@ -1,5 +1,4 @@
 #include <gpiod.h>
-#include <dt-bindings/gpio/tegra186-gpio.h>
 #include <stdio.h>
 #include <assert.h>
 
