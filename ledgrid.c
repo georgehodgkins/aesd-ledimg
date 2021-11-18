@@ -6,10 +6,10 @@
 #define GPIO_CHIP_PATH "/dev/gpiochip0"
 #define GRID_CTL_BITS 4
 static const unsigned GRID_CTL_PINS[] = {
-	12, // SPI_1_MOSI / header pin 19
-	13, // SPI_1_MISO / header pin 21
-	14, // SPI_1_SCK / header pin 23
-	15, // SPI_1_CS0 / header pin 24
+	16, // SPI_1_MOSI / header pin 19
+	17, // SPI_1_MISO / header pin 21
+	18, // SPI_1_SCK / header pin 23
+	19, // SPI_1_CS0 / header pin 24
 };
 
 static struct gpiod_chip* chip;
