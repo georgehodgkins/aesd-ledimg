@@ -7,6 +7,7 @@ include_directories( ${OpenCV_INCLUDE_DIRS} )
 add_library( ledgrid OBJECT ledgrid.c )
 target_link_libraries (ledgrid libgpiod)
 add_executable( gridtest gridtest.c $<TARGET_OBJECTS:ledgrid> )
+target_link_libraries( gridtest libgpiod )
 
 add_executable( testapp dummy.cpp )
 target_link_libraries( testapp ${OpenCV_LIBS} )
