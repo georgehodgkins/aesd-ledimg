@@ -3,20 +3,21 @@
 #include <stdio.h>
 #include <assert.h>
 
-#define GPIO_CHIP "/dev/gpiochip0"
-static const unsigned GRID_CTL_PINS[][2] = {
-	{TEGRA_MAIN_GPIO_PORT_C, 0},
-	{TEGRA_MAIN_GPIO_PORT_C, 1},
-	{TEGRA_MAIN_GPIO_PORT_C, 2},
-	{TEGRA_MAIN_GPIO_PORT_C, 3}	
+#define GPIO_CHIP_PATH "/dev/gpiochip0"
+#define GRID_CTL_BITS 4
+static const unsigned GRID_CTL_PINS[] = {
+	12, // SPI_1_MOSI / header pin 19
+	13, // SPI_1_MISO / header pin 21
+	14, // SPI_1_SCK / header pin 23
+	15, // SPI_1_CS0 / header pin 24
 };
 
-// runtime pin numbers for LED address bits
-static unsigned gridctl[GRID_CTL_BITS] = {UINT_MAX};
+static struct gpiod_chip* chip;
+static struct gpiod_line* gridctl[GRID_CTL_BITS] = {NULL};
 
 int grid_init () {
-	_Static_assert(GRID_CTL_BITS < 16); // label can only acommodate a single hex digit
-	_Static_assert(sizeof(GRID_CTL_PINS)/(sizeof(unsigned)*2) == GRID_CTL_BITS);
+	_Static_assert(GRID_CTL_BITS < 16); // label only supports a single hex digit
+	_Static_assert(sizeof(GRID_CTL_PINS)/sizeof(unsigned) == GRID_CTL_BITS);
 
 	// open syslog
 	openlog("ledgrid", 
@@ -28,32 +29,41 @@ int grid_init () {
 	, LOG_USER);
 
 	// acquire GPIOs and set them as outputs
-	char* pinlabel = "LEDGRID_x";
+	chip = gpiod_chip_open(GPIO_CHIP_PATH);
+	if (chip == NULL) {
+		syslog(LOG_ERR, "Could not open GPIO chip at %s", GPIO_CHIP_PATH);
+		goto fail;
+	}
+	char* pinlab = "LEDGRID_x"
 	for (unsigned p = 0; p < GRID_CTL_BITS; ++p) {
-		syslog(LOG_DEBUG, "Initializing LEDGRID_%x at port %u, pin %u", 
-				p, GRID_CTL_PINS[p][0], GRID_CTL_PINS[p][1]);
-		gridctl[p] = TEGRA_MAIN_GPIO(GRID_CTL_PINS[p][0], GRID_CTL_PINS[p][1]);
-		if (!gpio_is_valid((int) gridctl[p])) {
-			syslog(LOG_ERR, "could not locate pin LEDGRID_%x at port %u, pin %u",
-					p, GRID_CTL_PINS[p][0], GRID_CTL_PINS[p][1]);
-			return -1;
+		syslog(LOG_DEBUG, "Initializing LEDGRID_%x at pin %u of chip %s", 
+				p, GRID_CTL_PINS[p], gpiod_chip_name(chip));
+		gridctl[p] = gpiod_chip_get_line(chip, GRID_CTL_PINS[p]);
+		if (gridctl[p] == NULL) {
+			syslog(LOG_ERR, "Could not get pin %u of chip %s", GRID_CTL_PINS[p], gpiod_chip_name(chip));
+			goto fail;
 		}
-		size_t llen = strlen(pinlabel);
-		int s = sprintf(pinlabel, "LEDGRID_%x", p);
-		assert(s == llen);
-		s = gpio_request(gridctl[p], pinlabel);
-	   	if (s == -1) {
-			syslog(LOG_ERR, "could not acquire pin %u (%s)",  gridctl[p], pinlabel);
-			return -1;
-		}
-		s = gpio_direction_output(gridctl[p], 0);
+		s = sprintf(pinlab, "LEDGRID_%x", p);
+		assert(s == 1);
+		int s = gpiod_line_request_output(gridctl[p], pinlab, 0);
 		if (s == -1) {
-			syslog(LOG_ERR, "could not set pin %u (%s) as output", gridctl[p], pinlabel);
-			return -1;
+			syslog(LOG_ERR, "Could not reserve pin %u as an input", GRID_CTL_PINS[p]);
+			goto fail;
 		}
-		syslog(LOG_DEBUG, "LEDGRID_%x initialized on pin %u", p, gridctl[p]);
+		syslog(LOG_DEBUG, "LEDGRID_%x initialized on pin %u of chip %s", p, gridctl[p], gpiod_chip_name(chip));
 	}
 	return 0;
+
+fail:
+	for (unsigned p = 0; p < GRID_CTL_BITS; ++p) {
+		if (gridctl[p]) {
+			gpiod_line_release(gridctl[p]);
+			gridctl[p] = NULL;
+		}
+	}
+	gpiod_chip_close(chip);
+	chip = NULL;
+	return -1;	
 }
 
 int grid_select (unsigned addr) {
@@ -62,14 +72,23 @@ int grid_select (unsigned addr) {
 		return -1;
 	}
 
+	if (chip == NULL) {
+		syslog(LOG_ERR, "Attempting to use grid without initializing it!");
+		return -1;
+	}
+
 	for (unsigned p = 0; p < GRID_CTL_BITS; ++p) {
-		if (gridctl[p] == UINT_MAX) {
-			syslog(LOG_ERR, "Attempting to use grid without initializing it!");
+		if (gridctl[p] == NULL) {
+			syslog(LOG_ERR, "Pin LEDGRID_%x is not initialized!", p);
 			return -1;
 		}
 		int bit =  (addr & (1 << p)) ? 1 : 0;
 		syslog(LOG_DEBUG, "Selecting address %x: LEDGRID_%x %s", addr, p, (bit) ? "HIGH" : "LOW");
-		__gpio_set_value(gridctl[p], bit);
+		int s = gpiod_line_set_value(pinctl[p], bit);
+		if (s == -1) {
+			syslog(LOG_ERR, "Error setting LEDGRID_%x", p);
+			return -1;
+		}
 	}
 
 	return 0;
@@ -77,7 +96,9 @@ int grid_select (unsigned addr) {
 
 void grid_free (void) {
 	for (unsigned p = 0; p < GRID_CTL_BITS; ++p) {
-		gpio_free(gridctl[p]);
-		gridctl[p] = UINT_MAX;
+		gpiod_line_release(gridctl[p]);
+		gridctl[p] = NULL;
 	}
+	gpiod_chip_close(chip);
+	chip = NULL;
 }
