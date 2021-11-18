@@ -11,5 +11,5 @@ target_link_libraries( gridtest gpiod )
 add_executable( testapp dummy.cpp )
 target_link_libraries( testapp ${OpenCV_LIBS} )
 
-install(TARGETS testapp DESTINATION ./bin)
+install(TARGETS testapp gridtest DESTINATION ./bin)
 
