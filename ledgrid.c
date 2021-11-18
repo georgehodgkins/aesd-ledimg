@@ -1,6 +1,7 @@
 #include <gpiod.h>
 #include <stdio.h>
 #include <assert.h>
+#include <syslog.h>
 
 #define GPIO_CHIP_PATH "/dev/gpiochip0"
 #define GRID_CTL_BITS 4
@@ -15,8 +16,8 @@ static struct gpiod_chip* chip;
 static struct gpiod_line* gridctl[GRID_CTL_BITS] = {NULL};
 
 int grid_init () {
-	_Static_assert(GRID_CTL_BITS < 16); // label only supports a single hex digit
-	_Static_assert(sizeof(GRID_CTL_PINS)/sizeof(unsigned) == GRID_CTL_BITS);
+	_Static_assert(GRID_CTL_BITS < 16, "LEDGRID label only supports a single hex digit");
+	_Static_assert(sizeof(GRID_CTL_PINS)/sizeof(unsigned) == GRID_CTL_BITS, "Wrong number of pins");
 
 	// open syslog
 	openlog("ledgrid", 
@@ -33,7 +34,7 @@ int grid_init () {
 		syslog(LOG_ERR, "Could not open GPIO chip at %s", GPIO_CHIP_PATH);
 		goto fail;
 	}
-	char* pinlab = "LEDGRID_x"
+	char* pinlab = "LEDGRID_x";
 	for (unsigned p = 0; p < GRID_CTL_BITS; ++p) {
 		syslog(LOG_DEBUG, "Initializing LEDGRID_%x at pin %u of chip %s", 
 				p, GRID_CTL_PINS[p], gpiod_chip_name(chip));
@@ -42,9 +43,9 @@ int grid_init () {
 			syslog(LOG_ERR, "Could not get pin %u of chip %s", GRID_CTL_PINS[p], gpiod_chip_name(chip));
 			goto fail;
 		}
-		s = sprintf(pinlab, "LEDGRID_%x", p);
+		int s = sprintf(pinlab, "LEDGRID_%x", p);
 		assert(s == 1);
-		int s = gpiod_line_request_output(gridctl[p], pinlab, 0);
+		s = gpiod_line_request_output(gridctl[p], pinlab, 0);
 		if (s == -1) {
 			syslog(LOG_ERR, "Could not reserve pin %u as an input", GRID_CTL_PINS[p]);
 			goto fail;
@@ -83,7 +84,7 @@ int grid_select (unsigned addr) {
 		}
 		int bit =  (addr & (1 << p)) ? 1 : 0;
 		syslog(LOG_DEBUG, "Selecting address %x: LEDGRID_%x %s", addr, p, (bit) ? "HIGH" : "LOW");
-		int s = gpiod_line_set_value(pinctl[p], bit);
+		int s = gpiod_line_set_value(gridctl[p], bit);
 		if (s == -1) {
 			syslog(LOG_ERR, "Error setting LEDGRID_%x", p);
 			return -1;
