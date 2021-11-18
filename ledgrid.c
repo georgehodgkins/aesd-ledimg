@@ -1,9 +1,9 @@
-#include <asm/gpio.h>
+#include <gpiod.h>
 #include <dt-bindings/gpio/tegra186-gpio.h>
 #include <stdio.h>
 #include <assert.h>
 
-#define GRID_CTL_BITS 4
+#define GPIO_CHIP "/dev/gpiochip0"
 static const unsigned GRID_CTL_PINS[][2] = {
 	{TEGRA_MAIN_GPIO_PORT_C, 0},
 	{TEGRA_MAIN_GPIO_PORT_C, 1},
@@ -16,7 +16,7 @@ static unsigned gridctl[GRID_CTL_BITS] = {UINT_MAX};
 
 int grid_init () {
 	_Static_assert(GRID_CTL_BITS < 16); // label can only acommodate a single hex digit
-	_Static_assert(sizeof(GRID_CTL_BITS)/(sizeof(unsigned)*2) == GRID_CTL_BITS);
+	_Static_assert(sizeof(GRID_CTL_PINS)/(sizeof(unsigned)*2) == GRID_CTL_BITS);
 
 	// open syslog
 	openlog("ledgrid", 
