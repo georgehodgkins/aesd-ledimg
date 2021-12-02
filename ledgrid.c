@@ -34,7 +34,7 @@ int grid_init () {
 		syslog(LOG_ERR, "Could not open GPIO chip at %s", GPIO_CHIP_PATH);
 		goto fail;
 	}
-	char* pinlab = "LEDGRID_x";
+	const char* pinlab = "LEDGRID";
 	for (unsigned p = 0; p < GRID_CTL_BITS; ++p) {
 		syslog(LOG_DEBUG, "Initializing LEDGRID_%x at pin %u of chip %s", 
 				p, GRID_CTL_PINS[p], gpiod_chip_name(chip));
@@ -43,11 +43,11 @@ int grid_init () {
 			syslog(LOG_ERR, "Could not get pin %u of chip %s", GRID_CTL_PINS[p], gpiod_chip_name(chip));
 			goto fail;
 		}
-		int s = sprintf(pinlab, "LEDGRID_%x", p);
-		assert(s == 1);
-		s = gpiod_line_request_output(gridctl[p], pinlab, 1);
+		//int s = sprintf(pinlab, "LEDGRID_%x", p);
+		//assert(s == 1);
+		int s = gpiod_line_request_output(gridctl[p], pinlab, 1);
 		if (s == -1) {
-			syslog(LOG_ERR, "Could not reserve pin %u as an input", GRID_CTL_PINS[p]);
+			syslog(LOG_ERR, "Could not reserve pin %u as an output", GRID_CTL_PINS[p]);
 			goto fail;
 		}
 		syslog(LOG_DEBUG, "LEDGRID_%x initialized on pin %u of chip %s", p, gridctl[p], gpiod_chip_name(chip));
@@ -61,7 +61,8 @@ fail:
 			gridctl[p] = NULL;
 		}
 	}
-	gpiod_chip_close(chip);
+	if (chip)
+		gpiod_chip_close(chip);
 	chip = NULL;
 	return -1;	
 }
