@@ -43,8 +43,7 @@ int grid_init () {
 			syslog(LOG_ERR, "Could not get pin %u of chip %s", GRID_CTL_PINS[p], gpiod_chip_name(chip));
 			goto fail;
 		}
-		//int s = sprintf(pinlab, "LEDGRID_%x", p);
-		//assert(s == 1);
+		syslog(LOG_DEBUG, "Got line");
 		int s = gpiod_line_request_output(gridctl[p], pinlab, 1);
 		if (s == -1) {
 			syslog(LOG_ERR, "Could not reserve pin %u as an output", GRID_CTL_PINS[p]);
