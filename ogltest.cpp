@@ -4,7 +4,7 @@
 
 using namespace cv;
 
-int main () {
+int main (int argc, char** argv) {
 	std::cout << getBuildInformation() << std::endl;
 
 	Mat sample = imread(argv[1]);
