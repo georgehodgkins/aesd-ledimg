@@ -33,11 +33,14 @@ int grid_init () {
 	if (chip == NULL) {
 		syslog(LOG_ERR, "Could not open GPIO chip at %s", GPIO_CHIP_PATH);
 		goto fail;
+	} else {
+		syslog(LOG_DEBUG, "Opened chip %s as %s [%p]", GPIO_CHIP_PATH, gpiod_chip_name(chip), chip);
 	}
 	const char* pinlab = "LEDGRID";
 	for (unsigned p = 0; p < GRID_CTL_BITS; ++p) {
 		syslog(LOG_DEBUG, "Initializing LEDGRID_%x at pin %u of chip %s", 
 				p, GRID_CTL_PINS[p], gpiod_chip_name(chip));
+		assert(chip);
 		gridctl[p] = gpiod_chip_get_line(chip, GRID_CTL_PINS[p]);
 		if (gridctl[p] == NULL) {
 			syslog(LOG_ERR, "Could not get pin %u of chip %s", GRID_CTL_PINS[p], gpiod_chip_name(chip));
