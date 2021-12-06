@@ -9,8 +9,8 @@ add_library( ledgrid OBJECT ledgrid.c )
 add_executable( gridtest gridtest.c $<TARGET_OBJECTS:ledgrid> )
 target_link_libraries( gridtest gpiod )
 
-add_executable( testapp dummy.cpp )
-target_link_libraries( testapp ${OpenCV_LIBS} )
+add_executable( circle circle.cpp )
+target_link_libraries( circle ${OpenCV_LIBS} )
 
-install(TARGETS testapp gridtest DESTINATION ./bin)
+install(TARGETS circle gridtest DESTINATION ./bin)
 

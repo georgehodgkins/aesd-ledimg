@@ -85,8 +85,8 @@ static void setGridPoint (const optional<Vec3f>& Po, Mat& image) {
 		assert(addr >= 0 && addr < 16);
 
 		// select LED
-		//int s = grid_select(addr);
-		//assert(s == 0 && "Error selecting LED!");
+		int s = grid_select(addr);
+		assert(s == 0 && "Error selecting LED!");
 
 		// select box
 		Point2i topleft (c*COLWIDTH, r*ROWHEIGHT);
@@ -100,8 +100,8 @@ static void setGridPoint (const optional<Vec3f>& Po, Mat& image) {
 #define WIN_REFIMG "Reference image"
 int main () {
 	// open LED grid
-	//int s = grid_init();
-	//assert(s == 0 && "Could not initialize grid!");
+	int s = grid_init();
+	assert(s == 0 && "Could not initialize grid!");
 	
 	// open camera stream
 	VideoCapture cam (IMG_CAP_SOURCE, CAP_V4L2);
@@ -131,6 +131,7 @@ int main () {
 		imshow(WIN_REFIMG, image);
 		waitKey(1);
 	}
-
+	
+	grid_free();
 	return 0;
 }
