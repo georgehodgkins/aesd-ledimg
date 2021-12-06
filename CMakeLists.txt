@@ -13,5 +13,8 @@ target_link_libraries( gridtest gpiod )
 add_executable( circle circle.cpp $<TARGET_OBJECTS:ledgrid> )
 target_link_libraries( circle ${OpenCV_LIBS} gpiod )
 
-install(TARGETS circle gridtest DESTINATION ./bin)
+add_executable( ogltest ogltest.cpp )
+target_link_libraries( ogltest ${OpenCV_LIBS} )
+
+install(TARGETS circle gridtest ogltest DESTINATION ./bin)
 
