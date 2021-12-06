@@ -113,7 +113,7 @@ int main () {
 	struct sigaction act;
 	act.sa_handler = exitHandler;
 	act.sa_flags = 0;
-	int s = sigaction(SIGINT, &act, NULL);
+	s = sigaction(SIGINT, &act, NULL);
 	assert(s == 0);
 
 	Mat image;
