@@ -135,7 +135,6 @@ int main (int argc, char** argv) {
 			cout << "No image from camera, exiting\n";
 			break;
 		}
-		imshow(WIN_REFIMG, image);
 		// find circle + light appropriate LEDs + write reference annotations to image
 		setGridPoint(locateCircle(image), image);
 		// display image
