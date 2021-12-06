@@ -98,17 +98,28 @@ static void setGridPoint (const optional<Vec3f>& Po, Mat& image) {
 
 
 #define WIN_REFIMG "Reference image"
-int main () {
-	// open LED grid
-	int s = grid_init();
-	assert(s == 0 && "Could not initialize grid!");
-	
+int main (int argc, char** argv) {
+	if (argc != 2) {
+		cout << "Usage: " << argv[0] << "</path/to/cam>" << '\n';
+		return 1;
+	}
+
 	// open camera stream
-	VideoCapture cam (IMG_CAP_SOURCE, CAP_V4L2);
-	assert(cam.isOpened() && "Could not open camera!");
+	VideoCapture cam (argv[1], CAP_V4L2);
+	if (!cam.isOpened()) {
+		cout << "Could not open camera at " << argv[1] << " with V4L2 backend.\n";
+		return 1;
+	}
 	COLWIDTH = cam.get(CAP_PROP_FRAME_WIDTH) / LEDGRID_COLS;
 	ROWHEIGHT = cam.get(CAP_PROP_FRAME_HEIGHT) / LEDGRID_ROWS;
-
+	
+	// open LED grid
+	int s = grid_init();
+	if (s) {
+		cout << "Could not initialize LED grid.\n";
+		return 1;
+	}
+	
 	//namedWindow (WIN_REFIMG, WINDOW_KEEPRATIO | WINDOW_AUTOSIZE);
 	struct sigaction act;
 	act.sa_handler = exitHandler;
