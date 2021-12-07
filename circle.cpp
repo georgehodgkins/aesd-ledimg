@@ -120,7 +120,6 @@ int main (int argc, char** argv) {
 		return 1;
 	}
 	
-	//namedWindow (WIN_REFIMG, WINDOW_KEEPRATIO | WINDOW_AUTOSIZE);
 	struct sigaction act;
 	act.sa_handler = exitHandler;
 	act.sa_flags = 0;
@@ -138,7 +137,7 @@ int main (int argc, char** argv) {
 		// find circle + light appropriate LEDs + write reference annotations to image
 		setGridPoint(locateCircle(image), image);
 		// display image
-		imshow(WIN_REFIMG, image);
+		//imshow(WIN_REFIMG, image);
 		waitKey(1);
 	}
 	
