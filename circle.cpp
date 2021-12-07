@@ -84,10 +84,11 @@ static void setGridPoint (const optional<Vec3f>& Po, Mat& image) {
 		cout << "\"Selected\" coord (" << ((addr & 0xc) >> 2) << ", " << (addr & 0x3) << ") [raw " << addr << "]\n";
 		assert(addr >= 0 && addr < 16);
 
+#ifndef DEVHOST
 		// select LED
 		int s = grid_select(addr);
 		assert(s == 0 && "Error selecting LED!");
-
+#endif
 		// select box
 		Point2i topleft (c*COLWIDTH, r*ROWHEIGHT);
 		Point2i botrght ((c+1)*COLWIDTH-1, (r+1)*ROWHEIGHT-1);
@@ -112,19 +113,21 @@ int main (int argc, char** argv) {
 	}
 	COLWIDTH = cam.get(CAP_PROP_FRAME_WIDTH) / LEDGRID_COLS;
 	ROWHEIGHT = cam.get(CAP_PROP_FRAME_HEIGHT) / LEDGRID_ROWS;
-	
+
+#ifndef DEVHOST	
 	// open LED grid
 	int s = grid_init();
 	if (s) {
 		cout << "Could not initialize LED grid.\n";
 		return 1;
 	}
+#endif
 	
 	struct sigaction act;
 	act.sa_handler = exitHandler;
 	act.sa_flags = 0;
-	s = sigaction(SIGINT, &act, NULL);
-	assert(s == 0);
+	int ss = sigaction(SIGINT, &act, NULL);
+	assert(ss == 0);
 
 	Mat image;
 	while (loop) {
@@ -137,10 +140,14 @@ int main (int argc, char** argv) {
 		// find circle + light appropriate LEDs + write reference annotations to image
 		setGridPoint(locateCircle(image), image);
 		// display image
-		//imshow(WIN_REFIMG, image);
+#ifdef DEVHOST
+		imshow(WIN_REFIMG, image);
+#endif
 		waitKey(1);
 	}
 	
+#ifndef DEVHOST
 	grid_free();
+#endif
 	return 0;
 }

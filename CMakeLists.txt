@@ -13,8 +13,10 @@ target_link_libraries( gridtest gpiod )
 add_executable( circle circle.cpp $<TARGET_OBJECTS:ledgrid> )
 target_link_libraries( circle ${OpenCV_LIBS} gpiod )
 
-add_executable( ogltest ogltest.cpp )
-target_link_libraries( ogltest ${OpenCV_LIBS} )
+option(DEVHOST "Enable reference output, disable GPIO output" OFF)
+if (DEVHOST)
+	target_compile_definitions(circle PUBLIC "-DDEVHOST")
+endif()
 
-install(TARGETS circle gridtest ogltest DESTINATION ./bin)
+install(TARGETS circle gridtest DESTINATION ./bin)
 
